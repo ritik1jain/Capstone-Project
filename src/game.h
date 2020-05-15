@@ -2,6 +2,10 @@
 #define GAME_H
 
 #include <random>
+#include <string>
+#include <unordered_map>
+#include <thread>
+#include <future>
 #include "SDL.h"
 #include "controller.h"
 #include "renderer.h"
@@ -9,25 +13,57 @@
 
 class Game {
  public:
-  Game(std::size_t grid_width, std::size_t grid_height);
-  void Run(Controller const &controller, Renderer &renderer,
-           std::size_t target_frame_duration);
-  int GetScore() const;
-  int GetSize() const;
+  // Constructor
+  Game(std::size_t gridWidth, std::size_t gridHeight,
+       Controller &&controller, Renderer &&renderer);
+
+  // Public Methods
+  void displayScoreBoard();
+  void run();
+  
+  // Getters
+  int getScore() const;
+  int getHighScore() const;
+  std::string getPlayerName() const;
+
+  // Public Data
+  const std::string kScoreBoardPath{"../assets/scoreboard.txt"};
+  const std::size_t kFramesPerSecond{60};
+  const std::size_t kTargetFrameDuration{1000 / kFramesPerSecond};
 
  private:
-  Snake snake;
-  SDL_Point food;
 
-  std::random_device dev;
-  std::mt19937 engine;
-  std::uniform_int_distribution<int> random_w;
-  std::uniform_int_distribution<int> random_h;
+  // Private methods
+  void placeFood_();
+  void update_(bool &running);
+  bool newPlayer_(std::string name);
+  void updateScoreBoard_();
+  void showGameBanner_();
+  void getPlayerDetails_();
+  void readScoreBoard_();
+  void run_();
+  void displayResult_();
+  bool isValidScore_(std::string const &score);
 
-  int score{0};
+  // Private data
+  Snake        _snake;
+  Controller   _gController;
+  Renderer     _gRenderer;
+  SDL_Point    _food;
+  int          _score{0};
+  int          _highScore{0};
+  std::string  _playerName{};
+  std::string  _topScorer{};
+  bool         _disableLeaderBoardFeature{false};
 
-  void PlaceFood();
-  void Update();
+  // For randomly placing food 
+  std::random_device _dev;
+  std::mt19937    _engine;
+  std::uniform_int_distribution<int> _randomW;
+  std::uniform_int_distribution<int> _randomH;
+
+  // To store players and their scores
+  std::unordered_map <std::string, std::string> _scoreboard{};
 };
 
 #endif

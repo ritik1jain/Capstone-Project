@@ -2,72 +2,87 @@
 #include <cmath>
 #include <iostream>
 
-void Snake::Update() {
-  SDL_Point prev_cell{
-      static_cast<int>(head_x),
-      static_cast<int>(
-          head_y)};  // We first capture the head's cell before updating.
-  UpdateHead();
-  SDL_Point current_cell{
-      static_cast<int>(head_x),
-      static_cast<int>(head_y)};  // Capture the head's cell after updating.
+void Snake::update() {
+  SDL_Point previousCell{
+      static_cast<int>(headX),
+      static_cast<int>(headY)
+  };  // Capture the head's cell before updating.
 
-  // Update all of the body vector items if the snake head has moved to a new
-  // cell.
-  if (current_cell.x != prev_cell.x || current_cell.y != prev_cell.y) {
-    UpdateBody(current_cell, prev_cell);
+  updateHead_();
+
+  SDL_Point currentCell{
+      static_cast<int>(headX),
+      static_cast<int>(headY)
+  };  // Capture the head's cell after updating.
+
+  /*
+   * Update all of the body vector items 
+   * if the snake head has moved to a new cell.
+   */
+  if (currentCell.x != previousCell.x || currentCell.y != previousCell.y) {
+    updateBody_(std::move(currentCell), std::move(previousCell));
   }
 }
 
-void Snake::UpdateHead() {
+void Snake::updateHead_() {
   switch (direction) {
+    /*
+     * In computer screens (even the mobile ones) the origin point (0,0) always start at
+     * the top left of the screen. Like the 4th quadrant in the graph.
+     * So y coordinate value decreases as you go downwards and increases when you go upwards
+     * Similarly, x coordinates increases as you go right and decreases when you go left.
+     * This is the concept that's used to control the direction of the Snake
+     */
     case Direction::kUp:
-      head_y -= speed;
+      headY -= speed;
       break;
 
     case Direction::kDown:
-      head_y += speed;
+      headY += speed;
       break;
 
     case Direction::kLeft:
-      head_x -= speed;
+      headX -= speed;
       break;
 
     case Direction::kRight:
-      head_x += speed;
+      headX += speed;
       break;
   }
 
   // Wrap the Snake around to the beginning if going off of the screen.
-  head_x = fmod(head_x + grid_width, grid_width);
-  head_y = fmod(head_y + grid_height, grid_height);
+  headX = fmod(headX + _gridWidth, _gridWidth);
+  headY = fmod(headY + _gridHeight, _gridHeight);
 }
 
-void Snake::UpdateBody(SDL_Point &current_head_cell, SDL_Point &prev_head_cell) {
+void Snake::updateBody_(SDL_Point &&currentHeadCell, SDL_Point &&previousHeadCell) {
   // Add previous head location to vector
-  body.push_back(prev_head_cell);
+  body.push_back(std::move(previousHeadCell));
 
-  if (!growing) {
+  if (!_growing) {
     // Remove the tail from the vector.
     body.erase(body.begin());
   } else {
-    growing = false;
+    _growing = false;
     size++;
   }
 
   // Check if the snake has died.
   for (auto const &item : body) {
-    if (current_head_cell.x == item.x && current_head_cell.y == item.y) {
+    if (currentHeadCell.x == item.x && currentHeadCell.y == item.y) {
       alive = false;
+      break;
     }
   }
 }
 
-void Snake::GrowBody() { growing = true; }
+void Snake::growBody() { 
+  _growing = true; 
+}
 
-// Inefficient method to check if cell is occupied by snake.
-bool Snake::SnakeCell(int x, int y) {
-  if (x == static_cast<int>(head_x) && y == static_cast<int>(head_y)) {
+// Check if the cell is occupied by snake.
+bool Snake::snakeCell(int x, int y) {
+  if (x == static_cast<int>(headX) && y == static_cast<int>(headY)) {
     return true;
   }
   for (auto const &item : body) {
